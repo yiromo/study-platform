@@ -1,15 +1,14 @@
 package com.example.studyplatform.service;
 
-import com.example.studyplatform.exception.FileStorageException;
-import com.example.studyplatform.model.Document;
-import com.example.studyplatform.repository.DocumentRepository;
-import com.example.studyplatform.service.MinioService;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.util.Optional;
+import com.example.studyplatform.exception.FileStorageException;
+import com.example.studyplatform.model.Document;
+import com.example.studyplatform.repository.DocumentRepository;
 
 @Service
 public class DocumentService {
@@ -23,26 +22,29 @@ public class DocumentService {
         this.minioService = minioService;
     }
 
-    public Document uploadDocument(MultipartFile file) {
+    public Document storeFile(MultipartFile file) {
         String fileName = file.getOriginalFilename();
         String fileType = file.getContentType();
 
         try {
-            // Upload file to MinIO
-            minioService.uploadFile(fileName, file.getInputStream(), fileType);
+            minioService.uploadFile(file);
 
-            // Save document information to the database
             Document document = new Document();
             document.setFileName(fileName);
             document.setFileType(fileType);
-            document.setStorageLocation("minio/" + fileName); // Adjust as necessary
+            document.setStorageLocation("minio/" + fileName); 
             return documentRepository.save(document);
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new FileStorageException("Could not store file " + fileName + ". Please try again!", e);
         }
     }
 
-    public Optional<Document> getDocument(Long documentId) {
-        return documentRepository.findById(documentId);
+    public List<Document> getAllDocuments() {
+        return documentRepository.findAll();
+    }
+
+    public Document getDocumentById(Long id) {
+        return documentRepository.findById(id)
+            .orElse(null);
     }
 }
