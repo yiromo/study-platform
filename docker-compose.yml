@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: ./dockerfiles
+      dockerfile: app.dockerfile
+    container_name: platform-app
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+    depends_on:
+      - postgres
+      - minio
+    networks:
+      platform-net:
+        ipv4_address: 192.168.17.3
+
+  postgres:
+    image: postgres:latest
+    container_name: platform-postgres
+    ports:
+      - "5440:5432"
+    env_file:
+      - ./envs/pg.env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      platform-net:
+        ipv4_address: 192.168.17.5
+    volumes:
+      - /platform/postgres_data:/var/lib/postgresql/data
+
+  minio:
+    image: minio/minio
+    container_name: platform-minio
+    volumes:
+      - /platform/minio:/data
+    ports:
+      - "9150:9000"
+      - "9533:9030"
+    restart: always
+    env_file:
+      - ./envs/minio.env
+    command: minio server /data --console-address ":9030"
+    networks:
+      platform-net:
+        ipv4_address: 192.168.17.9
+
+networks:
+  platform-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.17.0/24
