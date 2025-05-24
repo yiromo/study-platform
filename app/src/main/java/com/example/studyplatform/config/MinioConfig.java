@@ -1,10 +1,11 @@
 package com.example.studyplatform.config;
 
-import io.minio.MinioClient;
-import io.minio.errors.MinioException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import io.minio.MinioClient;
+import io.minio.errors.MinioException;
 
 @Configuration
 public class MinioConfig {
@@ -12,10 +13,10 @@ public class MinioConfig {
     @Value("${minio.url}")
     private String minioUrl;
 
-    @Value("${minio.access.key}")
+    @Value("${minio.access-key}")
     private String accessKey;
 
-    @Value("${minio.secret.key}")
+    @Value("${minio.secret-key}")
     private String secretKey;
 
     @Bean

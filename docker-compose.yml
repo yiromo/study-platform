@@ -3,8 +3,8 @@ version: '3.8'
 services:
   app:
     build:
-      context: ./dockerfiles
-      dockerfile: app.dockerfile
+      context: .
+      dockerfile: ./dockerfiles/app.dockerfile
     container_name: platform-app
     ports:
       - "8080:8080"
