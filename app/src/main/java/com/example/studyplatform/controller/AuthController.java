@@ -1,15 +1,29 @@
 package com.example.studyplatform.controller;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.example.studyplatform.dto.AuthResponse;
 import com.example.studyplatform.dto.LoginRequest;
 import com.example.studyplatform.dto.RegisterRequest;
 import com.example.studyplatform.dto.TokenRefreshRequest;
+import com.example.studyplatform.dto.UserResponseDto;
+import com.example.studyplatform.model.User;
 import com.example.studyplatform.service.AuthenticationService;
+import com.example.studyplatform.service.UserService;
+
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+
 
 @RestController
 @RequestMapping("/api/auth")
@@ -17,10 +31,12 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthenticationService authenticationService;
+    private final UserService userService;
 
     @Autowired
-    public AuthController(AuthenticationService authenticationService) {
+    public AuthController(AuthenticationService authenticationService, UserService userService) {
         this.authenticationService = authenticationService;
+        this.userService = userService;
     }
 
     @PostMapping("/register")
@@ -39,5 +55,20 @@ public class AuthController {
     @Operation(summary = "Refresh access token", description = "Use a refresh token to obtain a new access token")
     public ResponseEntity<AuthResponse> refreshToken(@RequestBody TokenRefreshRequest request) {
         return ResponseEntity.ok(authenticationService.refreshToken(request.getRefreshToken()));
+    }
+
+    @GetMapping("/me")
+    @Operation(
+        summary = "Get current user", 
+        description = "Get the currently authenticated user's information based on JWT token",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    public ResponseEntity<UserResponseDto> getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        User user = userService.findByUsername(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        return ResponseEntity.ok(UserResponseDto.fromEntity(user));
     }
 }
