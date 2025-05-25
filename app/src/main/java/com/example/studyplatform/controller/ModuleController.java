@@ -60,7 +60,7 @@ public class ModuleController {
         List<CourseModule> modules = moduleService.getModulesByCourse(courseId);
         Map<String, Object> response = new HashMap<>();
         response.put("total", modules.size());
-        response.put("modules", modules);
+        response.put("items", modules);
         return ResponseEntity.ok(response);
     }
     
