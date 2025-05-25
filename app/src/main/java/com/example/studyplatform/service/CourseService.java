@@ -93,7 +93,7 @@ public class CourseService {
             throw new AccessDeniedException("You don't have permission to update this course image");
         }
         
-        String fileName = "course_" + courseId + "_" + System.currentTimeMillis() + "_" + file.getOriginalFilename();
+        String fileName = "http://194.110.54.189:9150/objects/" + file.getOriginalFilename();
         
         minioService.uploadFile(file);
         

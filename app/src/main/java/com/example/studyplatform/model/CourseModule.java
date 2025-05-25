@@ -44,8 +44,9 @@ public class CourseModule {
     @Column(columnDefinition = "TEXT")
     private String text;
     
-    @Column(name = "video_url")
-    private String videoUrl;
+    @ManyToOne
+    @JoinColumn(name = "video_id")
+    private ModuleVideo video;
     
     @ManyToOne
     @JoinColumn(name = "test_id")
@@ -109,12 +110,12 @@ public class CourseModule {
         this.text = text;
     }
     
-    public String getVideoUrl() {
-        return videoUrl;
+    public ModuleVideo getVideo() {
+        return video;
     }
     
-    public void setVideoUrl(String videoUrl) {
-        this.videoUrl = videoUrl;
+    public void setVideo(ModuleVideo video) {
+        this.video = video;
     }
     
     public Test getTest() {

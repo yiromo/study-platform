@@ -6,7 +6,7 @@ public class ModuleDto {
     private String moduleTitle;
     private ModuleType moduleType;
     private String text;
-    private String videoUrl;
+    private String videoId;
     private String testId;
     
     public ModuleDto() {
@@ -36,12 +36,12 @@ public class ModuleDto {
         this.text = text;
     }
     
-    public String getVideoUrl() {
-        return videoUrl;
+    public String getVideoId() {
+        return videoId;
     }
     
-    public void setVideoUrl(String videoUrl) {
-        this.videoUrl = videoUrl;
+    public void setVideoId(String videoId) {
+        this.videoId = videoId;
     }
     
     public String getTestId() {

@@ -25,7 +25,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
-@RequestMapping("/api/tests")
+@RequestMapping("/api/modules/tests")
 @Tag(name = "Tests", description = "Test management API")
 @PreAuthorize("hasAuthority('ROLE_PROFESSOR')")
 public class TestController {

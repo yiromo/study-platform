@@ -2,6 +2,9 @@ package com.example.studyplatform.model;
 
 import java.util.UUID;
 
+import com.example.studyplatform.dto.UserResponseDto;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -35,6 +38,11 @@ public class Course {
     @Column(name = "image_url")
     private String imageUrl;
     
+    @JsonProperty("uploadedUser")
+    public UserResponseDto getUploadedUserDto() {
+        return UserResponseDto.fromEntity(uploadedUser);
+    }
+
     public Course() {
     }
     

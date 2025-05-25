@@ -7,7 +7,6 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import com.example.studyplatform.dto.ModuleDto;
 import com.example.studyplatform.exception.AccessDeniedException;
@@ -17,6 +16,7 @@ import com.example.studyplatform.model.CourseModule;
 import com.example.studyplatform.model.ModuleType;
 import com.example.studyplatform.model.Test;
 import com.example.studyplatform.model.User;
+import com.example.studyplatform.model.ModuleVideo;
 import com.example.studyplatform.repository.CourseModuleRepository;
 
 @Service
@@ -25,15 +25,15 @@ public class ModuleService {
     private final CourseModuleRepository moduleRepository;
     private final CourseService courseService;
     private final TestService testService;
-    private final MinioService minioService;
+    private final ModuleVideoService videoService;
     
     @Autowired
     public ModuleService(CourseModuleRepository moduleRepository, CourseService courseService, 
-                         TestService testService, MinioService minioService) {
+                         TestService testService, ModuleVideoService videoService) {
         this.moduleRepository = moduleRepository;
         this.courseService = courseService;
         this.testService = testService;
-        this.minioService = minioService;
+        this.videoService = videoService;
     }
     
     public List<CourseModule> getModulesByCourse(UUID courseId) {
@@ -41,7 +41,7 @@ public class ModuleService {
     }
     
     @Transactional
-    public CourseModule createModule(UUID courseId, ModuleDto moduleDto, User currentUser, MultipartFile videoFile) throws Exception {
+    public CourseModule createModule(UUID courseId, ModuleDto moduleDto, User currentUser) throws Exception {
         Course course = courseService.getCourseById(courseId);
         
         if (!course.getUploadedUser().getId().equals(currentUser.getId())) {
@@ -64,15 +64,12 @@ public class ModuleService {
                 module.setText(moduleDto.getText());
             }
             case VIDEO -> {
-                if (videoFile == null || videoFile.isEmpty()) {
-                    throw new IllegalArgumentException("Video file is required for VIDEO module type");
+                if (moduleDto.getVideoId() == null || moduleDto.getVideoId().isEmpty()) {
+                    throw new IllegalArgumentException("Video ID is required for VIDEO module type");
                 }
                 
-                String fileName = "course_" + courseId + "_module_" + moduleNum + "_" + 
-                                   System.currentTimeMillis() + "_" + videoFile.getOriginalFilename();
-                
-                minioService.uploadFile(videoFile);
-                module.setVideoUrl(fileName);
+                ModuleVideo video = videoService.getVideoById(UUID.fromString(moduleDto.getVideoId()));
+                module.setVideo(video);
             }
             case TEST -> {
                 if (moduleDto.getTestId() == null || moduleDto.getTestId().isEmpty()) {
@@ -88,7 +85,7 @@ public class ModuleService {
     }
     
     @Transactional
-    public CourseModule updateModule(UUID moduleId, ModuleDto moduleDto, User currentUser, MultipartFile videoFile) throws Exception {
+    public CourseModule updateModule(UUID moduleId, ModuleDto moduleDto, User currentUser) throws Exception {
         CourseModule module = moduleRepository.findById(moduleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Module not found with id: " + moduleId));
         
@@ -102,7 +99,7 @@ public class ModuleService {
         
         if (module.getModuleType() != moduleDto.getModuleType()) {
             module.setText(null);
-            module.setVideoUrl(null);
+            module.setVideo(null);
             module.setTest(null);
             
             module.setModuleType(moduleDto.getModuleType());
@@ -116,23 +113,12 @@ public class ModuleService {
                 module.setText(moduleDto.getText());
             }
             case VIDEO -> {
-                if (videoFile != null && !videoFile.isEmpty()) {
-                    if (module.getVideoUrl() != null) {
-                        try {
-                            minioService.deleteFile(module.getVideoUrl());
-                        } catch (Exception e) {
-                            System.err.println("Failed to delete old video: " + e.getMessage());
-                        }
-                    }
-                    
-                    String fileName = "course_" + course.getId() + "_module_" + module.getModuleNum() + "_" + 
-                                      System.currentTimeMillis() + "_" + videoFile.getOriginalFilename();
-                    
-                    minioService.uploadFile(videoFile);
-                    module.setVideoUrl(fileName);
-                } else if (module.getVideoUrl() == null) {
-                    throw new IllegalArgumentException("Video file is required for VIDEO module type");
+                if (moduleDto.getVideoId() == null || moduleDto.getVideoId().isEmpty()) {
+                    throw new IllegalArgumentException("Video ID is required for VIDEO module type");
                 }
+                
+                ModuleVideo video = videoService.getVideoById(UUID.fromString(moduleDto.getVideoId()));
+                module.setVideo(video);
             }
             case TEST -> {
                 if (moduleDto.getTestId() == null || moduleDto.getTestId().isEmpty()) {
@@ -161,6 +147,11 @@ public class ModuleService {
         int deletedModuleNum = module.getModuleNum();
         UUID courseId = course.getId();
         
+        ModuleVideo video = null;
+        if (module.getModuleType() == ModuleType.VIDEO) {
+            video = module.getVideo();
+        }
+        
         moduleRepository.delete(module);
         
         List<CourseModule> subsequentModules = moduleRepository.findByCourseIdAndModuleNumGreaterThanOrderByModuleNumAsc(
@@ -171,11 +162,14 @@ public class ModuleService {
             moduleRepository.save(m);
         });
         
-        if (module.getModuleType() == ModuleType.VIDEO && module.getVideoUrl() != null) {
+        if (video != null) {
             try {
-                minioService.deleteFile(module.getVideoUrl());
+                boolean videoInUse = moduleRepository.existsByVideoId(video.getId());
+                if (!videoInUse) {
+                    videoService.deleteVideo(video.getId());
+                }
             } catch (Exception e) {
-                System.err.println("Failed to delete video file: " + e.getMessage());
+                System.err.println("Failed to delete video: " + e.getMessage());
             }
         }
     }

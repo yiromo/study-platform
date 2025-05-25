@@ -1,10 +1,13 @@
 package com.example.studyplatform.controller;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -53,10 +56,15 @@ public class CourseController {
     }
     
     @GetMapping
-    @Operation(summary = "Get all courses", description = "Retrieves a list of all courses")
-    public ResponseEntity<List<Course>> getAllCourses() {
+    @Operation(summary = "Get all courses", description = "Retrieves a list of all courses with total count")
+    public ResponseEntity<Map<String, Object>> getAllCourses() {
         List<Course> courses = courseService.getAllCourses();
-        return ResponseEntity.ok(courses);
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("total", courses.size());
+        response.put("items", courses);
+        
+        return ResponseEntity.ok(response);
     }
     
     @GetMapping("/{id}")
@@ -100,7 +108,7 @@ public class CourseController {
         return ResponseEntity.noContent().build();
     }
     
-    @PostMapping("/{id}/image")
+    @PostMapping(value = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(
         summary = "Upload course image", 
         description = "Uploads an image for a course (only the course creator can upload an image)",
@@ -113,7 +121,8 @@ public class CourseController {
             Course course = courseService.uploadCourseImage(id, image, getCurrentUser());
             return ResponseEntity.ok(course);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(null);
         }
     }
     

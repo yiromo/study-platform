@@ -1,5 +1,7 @@
 package com.example.studyplatform.controller;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.List;
 import java.util.UUID;
 
@@ -14,10 +16,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
 
 import com.example.studyplatform.dto.ModuleDto;
 import com.example.studyplatform.model.CourseModule;
@@ -55,9 +56,12 @@ public class ModuleController {
         summary = "Get all modules for a course", 
         description = "Retrieves a list of all modules for a course in ascending order by module number"
     )
-    public ResponseEntity<List<CourseModule>> getAllModules(@PathVariable UUID courseId) {
+    public ResponseEntity<Map<String, Object>> getAllModules(@PathVariable UUID courseId) {
         List<CourseModule> modules = moduleService.getModulesByCourse(courseId);
-        return ResponseEntity.ok(modules);
+        Map<String, Object> response = new HashMap<>();
+        response.put("total", modules.size());
+        response.put("modules", modules);
+        return ResponseEntity.ok(response);
     }
     
     @PostMapping("/course/{courseId}")
@@ -68,10 +72,9 @@ public class ModuleController {
     )
     public ResponseEntity<CourseModule> createModule(
             @PathVariable UUID courseId,
-            @RequestPart("moduleData") ModuleDto moduleDto,
-            @RequestPart(value = "videoFile", required = false) MultipartFile videoFile) {
+            @RequestBody ModuleDto moduleDto) {
         try {
-            CourseModule module = moduleService.createModule(courseId, moduleDto, getCurrentUser(), videoFile);
+            CourseModule module = moduleService.createModule(courseId, moduleDto, getCurrentUser());
             return new ResponseEntity<>(module, HttpStatus.CREATED);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -86,10 +89,9 @@ public class ModuleController {
     )
     public ResponseEntity<CourseModule> updateModule(
             @PathVariable UUID moduleId,
-            @RequestPart("moduleData") ModuleDto moduleDto,
-            @RequestPart(value = "videoFile", required = false) MultipartFile videoFile) {
+            @RequestBody ModuleDto moduleDto) {
         try {
-            CourseModule module = moduleService.updateModule(moduleId, moduleDto, getCurrentUser(), videoFile);
+            CourseModule module = moduleService.updateModule(moduleId, moduleDto, getCurrentUser());
             return ResponseEntity.ok(module);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

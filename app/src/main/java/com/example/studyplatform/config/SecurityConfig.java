@@ -40,8 +40,11 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/users/**").permitAll()
+                .requestMatchers("/api/documents/**").permitAll()
                 .requestMatchers("/api/courses").permitAll() 
                 .requestMatchers("/api/courses/{id}").permitAll() 
+                .requestMatchers("/api/modules/course/{courseId}").permitAll()
                 .requestMatchers("/api/health").permitAll() 
                 .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .anyRequest().authenticated()
