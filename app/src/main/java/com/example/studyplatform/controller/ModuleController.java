@@ -1,10 +1,12 @@
 package com.example.studyplatform.controller;
 
 import java.util.HashMap;
-import java.util.Map;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.studyplatform.dto.ModuleDto;
+import com.example.studyplatform.exception.ResourceNotFoundException;
 import com.example.studyplatform.model.CourseModule;
 import com.example.studyplatform.model.User;
 import com.example.studyplatform.service.ModuleService;
@@ -34,7 +37,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RequestMapping("/api/modules")
 @Tag(name = "Modules", description = "Course module management API")
 public class ModuleController {
-
+    private static final Logger logger = LoggerFactory.getLogger(ModuleController.class);
+    
     private final ModuleService moduleService;
     private final UserService userService;
     
@@ -57,11 +61,18 @@ public class ModuleController {
         description = "Retrieves a list of all modules for a course in ascending order by module number"
     )
     public ResponseEntity<Map<String, Object>> getAllModules(@PathVariable UUID courseId) {
-        List<CourseModule> modules = moduleService.getModulesByCourse(courseId);
-        Map<String, Object> response = new HashMap<>();
-        response.put("total", modules.size());
-        response.put("items", modules);
-        return ResponseEntity.ok(response);
+        try {
+            List<CourseModule> modules = moduleService.getModulesByCourse(courseId);
+            Map<String, Object> response = new HashMap<>();
+            response.put("total", modules.size());
+            response.put("items", modules);
+            return ResponseEntity.ok(response);
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (Exception e) {
+            logger.error("Error retrieving modules for course {}: {}", courseId, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
     
     @PostMapping("/course/{courseId}")

@@ -14,9 +14,9 @@ import com.example.studyplatform.exception.ResourceNotFoundException;
 import com.example.studyplatform.model.Course;
 import com.example.studyplatform.model.CourseModule;
 import com.example.studyplatform.model.ModuleType;
+import com.example.studyplatform.model.ModuleVideo;
 import com.example.studyplatform.model.Test;
 import com.example.studyplatform.model.User;
-import com.example.studyplatform.model.ModuleVideo;
 import com.example.studyplatform.repository.CourseModuleRepository;
 
 @Service
@@ -37,6 +37,7 @@ public class ModuleService {
     }
     
     public List<CourseModule> getModulesByCourse(UUID courseId) {
+        courseService.getCourseById(courseId); 
         return moduleRepository.findByCourseIdOrderByModuleNumAsc(courseId);
     }
     
