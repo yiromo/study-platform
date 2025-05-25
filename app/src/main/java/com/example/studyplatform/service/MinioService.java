@@ -1,15 +1,17 @@
 package com.example.studyplatform.service;
 
-import io.minio.GetObjectArgs;
-import io.minio.MinioClient;
-import io.minio.PutObjectArgs;
-import io.minio.errors.MinioException;
+import java.io.InputStream;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.InputStream;
+import io.minio.GetObjectArgs;
+import io.minio.MinioClient;
+import io.minio.PutObjectArgs;
+import io.minio.RemoveObjectArgs;
+import io.minio.errors.MinioException;
 
 @Service
 public class MinioService {
@@ -49,6 +51,19 @@ public class MinioService {
             );
         } catch (MinioException e) {
             throw new Exception("Error occurred while downloading file: " + e.getMessage(), e);
+        }
+    }
+    
+    public void deleteFile(String fileName) throws Exception {
+        try {
+            minioClient.removeObject(
+                RemoveObjectArgs.builder()
+                    .bucket(bucketName)
+                    .object(fileName)
+                    .build()
+            );
+        } catch (MinioException e) {
+            throw new Exception("Error occurred while deleting file: " + e.getMessage(), e);
         }
     }
 }
